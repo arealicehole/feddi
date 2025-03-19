@@ -1,0 +1,543 @@
+# Discord Accounting Bot - Comprehensive Development Plan
+
+## Project Overview
+
+This document outlines the complete development plan for building a Discord-based accounting bot for Trapper Dan Clothing. The bot will process expense receipts (via images and text), track inventory, manage sales, and generate reports through a conversational AI interface.
+
+### Key Requirements
+- **Hosting**: Akash Network (24/7 availability)
+- **Access**: Server-based (all server members can use)
+- **Data Storage**: Indefinite retention with regular backups
+- **User Verification**: Human approval required for all data entry
+- **Product Categories**: Custom tracking for blanks, DTF prints, and other products
+- **Interface**: Conversational AI for report generation and data entry
+
+---
+
+## Phase 1: Foundation Setup (Weeks 1-2)
+
+### 1.1 Environment Configuration
+- [ ] Set up Python virtual environment
+- [ ] Install core dependencies:
+  - `discord.py` (v2.0+)
+  - `sqlite3` (for database)
+  - `python-dotenv` (for environment variables)
+  - `Pillow` (for image processing)
+- [ ] Create project directory structure:
+  ```
+  /
+  ├── bot/
+  │   ├── __init__.py
+  │   ├── main.py
+  │   └── cogs/
+  ├── data/
+  │   └── database.db
+  ├── utils/
+  │   ├── __init__.py
+  │   ├── db_manager.py
+  │   ├── image_processor.py
+  │   └── report_generator.py
+  ├── .env
+  ├── requirements.txt
+  └── README.md
+  ```
+- [ ] Configure logging system
+
+### 1.2 Discord Bot Setup
+- [ ] Register new application on Discord Developer Portal
+- [ ] Create bot account and generate token
+- [ ] Set required permissions:
+  - Read Messages/View Channels
+  - Send Messages
+  - Embed Links
+  - Attach Files
+  - Read Message History
+- [ ] Generate OAuth2 URL for bot installation
+- [ ] Configure bot presence and basic profile
+
+### 1.3 Database Design
+- [ ] Create SQLite database schema:
+  ```sql
+  -- Products Table
+  CREATE TABLE products (
+      product_id INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL, -- 'blank', 'dtf', 'other'
+      subcategory TEXT, -- 'for_pressing', 'ready_to_sell'
+      manufacturer TEXT,
+      vendor TEXT,
+      style TEXT, -- manufacturer product ID
+      color TEXT,
+      size TEXT,
+      sku TEXT UNIQUE,
+      quantity INTEGER DEFAULT 0,
+      cost_price REAL,
+      selling_price REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Expenses Table
+  CREATE TABLE expenses (
+      expense_id INTEGER PRIMARY KEY,
+      date TEXT NOT NULL,
+      vendor TEXT NOT NULL,
+      amount REAL NOT NULL,
+      category TEXT NOT NULL,
+      description TEXT,
+      receipt_url TEXT, -- Discord URL to receipt image
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Customers Table
+  CREATE TABLE customers (
+      customer_id INTEGER PRIMARY KEY,
+      discord_id TEXT,
+      name TEXT NOT NULL,
+      contact_info TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Sales Table
+  CREATE TABLE sales (
+      sale_id INTEGER PRIMARY KEY,
+      customer_id INTEGER,
+      date TEXT NOT NULL,
+      total_amount REAL NOT NULL,
+      payment_method TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+  );
+
+  -- Sale Items Table
+  CREATE TABLE sale_items (
+      sale_item_id INTEGER PRIMARY KEY,
+      sale_id INTEGER NOT NULL,
+      product_id INTEGER NOT NULL,
+      quantity INTEGER NOT NULL,
+      price REAL NOT NULL,
+      FOREIGN KEY (sale_id) REFERENCES sales(sale_id),
+      FOREIGN KEY (product_id) REFERENCES products(product_id)
+  );
+
+  -- Audit Log Table
+  CREATE TABLE audit_log (
+      log_id INTEGER PRIMARY KEY,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
+      details TEXT,
+      timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- Backup Log Table
+  CREATE TABLE backup_log (
+      backup_id INTEGER PRIMARY KEY,
+      filename TEXT NOT NULL,
+      location TEXT NOT NULL,
+      size INTEGER NOT NULL,
+      timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+  ```
+- [ ] Implement database manager class for CRUD operations
+- [ ] Create database migration system for future updates
+- [ ] Set up connection pooling for efficient database access
+
+### 1.4 Core Bot Framework
+- [ ] Implement command handler using Discord.py Cogs
+- [ ] Create basic command structure:
+  ```python
+  @commands.command(name="help")
+  async def help_command(self, ctx, command=None):
+      # Dynamic help system
+  ```
+- [ ] Implement error handling and logging system
+- [ ] Set up event listeners for bot startup/shutdown
+- [ ] Create basic help command with command categories
+
+### 1.5 Testing Framework
+- [ ] Set up unit testing framework (pytest)
+- [ ] Create test database configuration
+- [ ] Implement basic test cases for database operations
+- [ ] Set up CI/CD pipeline if applicable
+
+---
+
+## Phase 2: Image Processing & OCR (Weeks 3-4)
+
+### 2.1 Image Processing Setup
+- [x] Implement attachment handling in Discord messages
+- [x] Store Discord image URLs instead of downloading images
+- [x] Create system to retrieve images from Discord URLs when needed
+- [x] Implement logging for image references
+
+### 2.2 AI Vision Model Integration
+- [ ] Research and select appropriate AI vision model API
+- [ ] Implement API integration for image analysis
+- [ ] Create parsing algorithms for extracted text from receipts
+- [ ] Implement extraction for:
+  - Date of purchase
+  - Vendor name
+  - Line items and prices
+  - Total amount
+  - Tax information
+- [ ] Add confidence scoring for extracted fields
+
+### 2.3 Data Verification Workflow
+- [x] Design user verification interface using Discord embeds
+- [x] Implement interactive verification process:
+  ```python
+  async def verify_receipt_data(self, ctx, extracted_data):
+      # Present data to user for verification
+      # Allow corrections through reactions or follow-up messages
+  ```
+- [x] Create manual data entry fallback for low-confidence extractions
+- [x] Implement approval mechanism using Discord reactions
+
+### 2.4 Text-Based Data Entry
+- [ ] Implement structured text commands for manual data entry
+- [ ] Create guided data entry conversations:
+  ```python
+  @commands.command(name="addexpense")
+  async def add_expense(self, ctx):
+      # Start conversation for expense entry
+      await ctx.send("Please enter the expense date (YYYY-MM-DD):")
+      # Continue conversation for other fields
+  ```
+- [ ] Implement validation for all text-based inputs
+- [ ] Create conversation state management for multi-step entries
+
+---
+
+## Phase 3: Inventory Management (Weeks 5-6)
+
+### 3.1 Product Management
+- [ ] Implement product addition commands:
+  ```python
+  @commands.command(name="addproduct")
+  async def add_product(self, ctx, category, name, *args):
+      # Handle product addition based on category
+  ```
+- [ ] Create dynamic product attribute collection based on category:
+  - Blank items: size, color, manufacturer, style, SKU
+  - DTF prints: size, manufacturer/vendor, size
+  - Other products: name, vendor, SKU
+- [ ] Implement product update and deletion commands
+- [ ] Create bulk product import/export functionality (CSV)
+
+### 3.2 Inventory Tracking
+- [ ] Implement inventory adjustment commands:
+  ```python
+  @commands.command(name="adjustinventory")
+  async def adjust_inventory(self, ctx, sku, quantity, reason=None):
+      # Update inventory quantities
+  ```
+- [ ] Create inventory lookup by various attributes:
+  - SKU
+  - Product name
+  - Category
+  - Size/color combinations
+- [ ] Implement inventory count verification workflow
+- [ ] Create inventory history tracking
+
+### 3.3 Inventory Reporting
+- [ ] Implement basic inventory reports:
+  - Current stock levels
+  - Low stock alerts
+  - Inventory value calculation
+- [ ] Create inventory movement history report
+- [ ] Implement inventory category breakdown report
+- [ ] Design formatted Discord embeds for inventory reports
+
+### 3.4 Inventory Backup
+- [ ] Implement inventory snapshot creation
+- [ ] Create Discord channel backup system:
+  ```python
+  async def backup_inventory_to_discord(self, channel_id):
+      # Export inventory data to CSV
+      # Upload to specified Discord channel
+  ```
+- [ ] Add scheduled backups using asyncio tasks
+- [ ] Implement backup restoration functionality
+
+---
+
+## Phase 4: Financial Tracking (Weeks 7-8)
+
+### 4.1 Expense Tracking
+- [ ] Implement expense creation from verified receipt data
+- [ ] Create expense categorization system with predefined categories
+- [ ] Implement expense lookup and filtering commands:
+  ```python
+  @commands.command(name="expenses")
+  async def list_expenses(self, ctx, period=None, category=None):
+      # List expenses with optional filters
+  ```
+- [ ] Add expense summary calculation functions
+- [ ] Implement expense editing and deletion (with audit logging)
+
+### 4.2 Sales Recording
+- [ ] Implement sale creation command:
+  ```python
+  @commands.command(name="addsale")
+  async def add_sale(self, ctx):
+      # Start interactive sale creation process
+  ```
+- [ ] Create product selection interface for sales
+- [ ] Implement automatic inventory adjustment on sale
+- [ ] Create customer management system
+- [ ] Implement sale history lookup by customer
+
+### 4.3 Financial Reporting
+- [ ] Create basic financial reports:
+  - Daily sales summary
+  - Expense breakdown by category
+  - Profit and loss calculation
+- [ ] Implement date range filtering for all reports
+- [ ] Create CSV export functionality for financial data:
+  ```python
+  async def export_financial_data(self, ctx, report_type, start_date, end_date):
+      # Generate CSV file with financial data
+      # Upload to Discord
+  ```
+- [ ] Implement financial data visualization (text-based initially)
+
+---
+
+## Phase 5: Conversational AI & Advanced Features (Weeks 9-11)
+
+### 5.1 Conversational Report Interface
+- [ ] Implement natural language processing for report requests
+- [ ] Create intent recognition system for common queries:
+  ```python
+  async def process_report_request(self, ctx, query):
+      # Analyze query for report type, date range, etc.
+      # Generate appropriate report
+  ```
+- [ ] Design conversational flow for report customization
+- [ ] Implement follow-up question handling for report refinement
+
+### 5.2 Automated Reporting
+- [ ] Create weekly automated summary report
+- [ ] Implement scheduling system for automated reports:
+  ```python
+  async def schedule_reports(self):
+      # Set up scheduled tasks for regular reports
+  ```
+- [ ] Design report templates with key business metrics:
+  - Weekly sales
+  - New inventory
+  - Expenses
+  - Profit margin
+- [ ] Implement report delivery to designated Discord channels
+
+### 5.3 Advanced Backup System
+- [ ] Implement comprehensive database backup system
+- [ ] Create backup rotation system (keep last N backups)
+- [ ] Add backup integrity verification
+- [ ] Implement optional cloud storage backup (Google Drive/OneDrive)
+  ```python
+  async def backup_to_cloud(self, service="discord"):
+      # Handle backup to specified cloud service
+  ```
+
+### 5.4 System Monitoring & Health
+- [ ] Implement system health monitoring
+- [ ] Create error tracking and reporting system
+- [ ] Add database integrity checks
+- [ ] Implement automatic recovery procedures
+- [ ] Design admin notifications for system issues
+
+---
+
+## Phase 6: Optimization & Deployment (Weeks 12-13)
+
+### 6.1 Performance Optimization
+- [ ] Optimize database queries for large datasets
+- [ ] Implement caching for frequently accessed data
+- [ ] Create index optimization for database tables
+- [ ] Optimize image processing pipeline
+- [ ] Add request throttling to prevent resource exhaustion
+
+### 6.2 User Experience Improvements
+- [ ] Refine command syntax for greater intuitiveness
+- [ ] Improve error messages and user guidance
+- [ ] Add command aliases for common operations
+- [ ] Implement auto-completion hints where possible
+- [ ] Create interactive tutorials for new users
+
+### 6.3 Deployment to Akash
+- [ ] Create Docker container for bot deployment:
+  ```dockerfile
+  FROM python:3.9-slim
+  WORKDIR /app
+  COPY requirements.txt .
+  RUN pip install --no-cache-dir -r requirements.txt
+  COPY . .
+  CMD ["python", "bot/main.py"]
+  ```
+- [ ] Set up environment variables for Akash deployment
+- [ ] Create deployment manifest for Akash:
+  ```yaml
+  version: "2.0"
+  services:
+    discord-bot:
+      image: your-docker-image
+      env:
+        - DISCORD_TOKEN=...
+        - ...
+      expose:
+        - port: 80
+          as: 80
+          to:
+            - global: true
+  ```
+- [ ] Configure persistent storage for database and backups
+- [ ] Set up monitoring and logging for production environment
+
+### 6.4 Documentation & Training
+- [ ] Create comprehensive user documentation
+- [ ] Design command reference guide
+- [ ] Implement in-Discord help system
+- [ ] Create developer documentation for future maintenance
+- [ ] Prepare training materials for end users
+
+### 6.5 Final Testing
+- [ ] Conduct end-to-end testing of all features
+- [ ] Perform load testing to ensure performance under heavy use
+- [ ] Validate backup and recovery procedures
+- [ ] Test all error handling pathways
+- [ ] Perform security audit of the application
+
+---
+
+## Technical Specifications
+
+### Database Schema Details
+
+**Products Table**
+- Tracks all inventory items with category-specific attributes
+- Categories: blank, dtf, other
+- SKU must be unique across all products
+
+**Expenses Table**
+- Records all business expenses
+- Stores reference to receipt image
+- Includes category for expense type
+
+**Sales & Customers Tables**
+- Tracks all sales transactions
+- Links to customer information
+- Maintains detailed sales line items
+
+**Audit & Backup Tables**
+- Provides traceability for all system changes
+- Records all backup operations
+
+### Environment Variables
+
+```
+DISCORD_TOKEN=your_discord_bot_token
+COMMAND_PREFIX=!
+BACKUP_CHANNEL_ID=discord_channel_id_for_backups
+REPORT_CHANNEL_ID=discord_channel_id_for_reports
+ADMIN_USER_IDS=comma_separated_admin_user_ids
+DATABASE_PATH=path_to_database_file
+```
+
+### System Requirements
+
+- Python 3.8+ 
+- 512MB+ RAM
+- 1GB+ storage for database and image caching
+- Stable internet connection for Discord API interaction
+- Akash deployment with persistent storage
+
+### Recovery Procedures
+
+1. Database corruption:
+   - Restore from latest backup in Discord channel
+   - Validate integrity after restoration
+
+2. Bot crash:
+   - Automatic restart via Docker/Akash configuration
+   - Log analysis for crash cause
+
+3. Discord API issues:
+   - Exponential backoff reconnection strategy
+   - Temporary data caching during disconnection
+
+---
+
+## Appendices
+
+### A. Command Reference
+
+**Inventory Commands**
+- `!addproduct <category> <name> [attributes...]` - Add new product
+- `!inventory <sku>` - View product details
+- `!adjustinventory <sku> <quantity> [reason]` - Update inventory quantity
+- `!inventoryreport [category]` - Generate inventory report
+
+**Financial Commands**
+- `!addexpense` - Start expense entry conversation
+- `!uploadreceipt` - Upload and process receipt image
+- `!expenses [period] [category]` - List expenses
+- `!addsale` - Start sale entry conversation
+- `!sales [period] [customer]` - List sales
+
+**Reporting Commands**
+- `!report <natural_language_query>` - Generate custom report
+- `!export <report_type> <start_date> <end_date>` - Export data to CSV
+
+**System Commands**
+- `!backup` - Manually trigger backup
+- `!restore <backup_id>` - Restore from backup
+- `!help [command]` - Show help information
+
+### B. Product Category Attributes
+
+**Blank Items**
+- Size: XS, S, M, L, XL, XXL, etc.
+- Color: String description
+- Manufacturer: Company name
+- Style: Manufacturer's product ID
+- Internal SKU: Unique identifier
+
+**DTF Prints**
+- Size: Dimensions of print
+- Manufacturer/Vendor: Source of print
+- SKU: Tracking identifier
+
+**Other Products**
+- Name: Product name
+- Vendor: Supplier name
+- SKU: Tracking identifier
+- Size: Optional dimension information
+
+### C. Error Handling Protocols
+
+1. AI Vision Model Failures:
+   - Present Discord image URL to user
+   - Offer manual data entry option
+   - Log failure for model improvement
+
+2. Data Validation Errors:
+   - Highlight specific fields with issues
+   - Provide guidance on correct format
+   - Offer examples of valid data
+
+3. System Errors:
+   - Log detailed error information
+   - Present user-friendly error message
+   - Report critical errors to admins
+
+### D. Backup Strategy
+
+1. Daily automated backups to Discord channel
+2. Weekly full database dumps
+3. Backup before major system changes
+4. Retention of last 30 daily backups
+5. Retention of last 12 weekly backups

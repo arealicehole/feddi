@@ -1,0 +1,22 @@
+# AccountME Discord Bot Development Log
+
+## 2025-03-19 (continued)
+- Prepared project for GitHub deployment
+  - Created comprehensive .gitignore file covering:
+    - Python artifacts
+    - Environment files
+    - Logs and databases
+    - IDE/config files
+    - Test/build artifacts
+  - Added .env.example template with:
+    - Discord bot token placeholder
+    - Database path configuration
+    - Log level settings
+    - External API key examples
+  - Organized project structure for clean repository:
+    - Confirmed all source files in bot/ and utils/
+    - Verified test files in tests/
+    - Checked documentation in docs/
+
+## 2025-03-20 (afternoon) 
+... [rest of existing content unchanged]

@@ -1,0 +1,31 @@
+# Discord Accounting Bot Dependencies
+
+# Core dependencies
+discord.py>=2.0.0
+python-dotenv>=0.19.0
+Pillow>=9.0.0
+aiohttp>=3.8.0
+
+# Database
+# Using built-in sqlite3
+
+# For AI Vision implementation (Phase 2)
+xai-client>=0.1.0  # For X.AI Grok Vision API
+base64>=1.0.0  # For encoding images
+
+# For cloud storage integration (Phase 5.3)
+google-api-python-client>=2.70.0  # For Google Drive API
+google-auth-oauthlib>=1.0.0  # For Google OAuth
+msal>=1.20.0  # For Microsoft Authentication Library (OneDrive)
+requests>=2.28.0  # For HTTP requests
+cryptography>=39.0.0  # For encryption/decryption
+
+# For backup compression and integrity verification
+hashlib>=20081119  # For SHA-256 checksums
+
+# For system monitoring (Phase 5.4)
+psutil>=5.9.0  # For system resource monitoring
+
+# For testing (Phase 1.5)
+pytest>=6.2.5
+pytest-asyncio>=0.16.0
