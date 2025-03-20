@@ -38,6 +38,8 @@ Quick setup steps:
 
 ### Installation
 
+#### Option 1: Standard Installation
+
 1. Clone this repository:
    ```
    git clone https://github.com/yourusername/accountme-bot.git
@@ -65,10 +67,38 @@ Quick setup steps:
 
 6. Edit the `.env` file with your Discord bot token and other configuration values
 
+#### Option 2: Docker Installation
+
+1. Clone this repository:
+   ```
+   git clone https://github.com/yourusername/accountme-bot.git
+   cd accountme-bot
+   ```
+
+2. Copy the `.env.example` file to `.env` and update it with your Discord bot token and other settings:
+   ```
+   cp .env.example .env
+   ```
+
+3. Build and run the Docker container:
+   ```
+   docker-compose up -d
+   ```
+
+#### Option 3: Akash Deployment
+
+For detailed instructions on deploying the bot to Akash Network, please refer to the [Akash Deployment Guide](docs/akash_deployment.md).
+
 ### Running the Bot
 
+#### Standard Installation
 ```
 python bot/main.py
+```
+
+#### Docker Installation
+```
+docker-compose up -d
 ```
 
 ## Usage
@@ -113,6 +143,23 @@ This project is being developed in multiple phases:
 4. **Financial Tracking**: Expense and sales recording
 5. **Conversational AI & Advanced Features**: Natural language reporting
 6. **Optimization & Deployment**: Performance improvements and deployment to Akash
+
+## Deployment Options
+
+### Local Deployment
+
+Run the bot directly on your local machine or server using Python or Docker.
+
+### Akash Network Deployment
+
+Deploy the bot to the Akash Network, a decentralized cloud computing marketplace, for 24/7 availability and cost-effective hosting. See the [Akash Deployment Guide](docs/akash_deployment.md) for detailed instructions.
+
+Benefits of Akash deployment:
+- 24/7 availability
+- Cost-effective hosting
+- Decentralized infrastructure
+- Persistent storage for database and backups
+- Automatic recovery from failures
 
 ## License
 
